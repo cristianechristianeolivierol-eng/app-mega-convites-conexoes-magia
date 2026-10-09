@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, MapPin, Heart, Gift, CheckCircle2, Music, Volume2, VolumeX, Copy, Check } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { Calendar, MapPin, Heart, Gift, CheckCircle2, Volume2, VolumeX, Copy, Check } from 'lucide-react';
 
 export default function ConviteClient({ convite }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -9,6 +10,7 @@ export default function ConviteClient({ convite }) {
   const [copied, setCopied] = useState(false);
   const [showRsvpModal, setShowRsvpModal] = useState(false);
   const [rsvpSent, setRsvpSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [nome, setNome] = useState('');
   const [acompanhantes, setAcompanhantes] = useState('1');
 
@@ -22,23 +24,25 @@ export default function ConviteClient({ convite }) {
       setAudio(audioObj);
     }
 
-    const target = new Date(convite.dataEvento).getTime();
+    if (convite.dataEvento) {
+      const target = new Date(convite.dataEvento).getTime();
 
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
-      const difference = target - now;
+      const interval = setInterval(() => {
+        const now = new Date().getTime();
+        const difference = target - now;
 
-      if (difference > 0) {
-        setTimeLeft({
-          dias: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          horas: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutos: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-          segundos: Math.floor((difference % (1000 * 60)) / 1000),
-        });
-      }
-    }, 1000);
+        if (difference > 0) {
+          setTimeLeft({
+            dias: Math.floor(difference / (1000 * 60 * 60 * 24)),
+            horas: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+            minutos: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+            segundos: Math.floor((difference % (1000 * 60)) / 1000),
+          });
+        }
+      }, 1000);
 
-    return () => clearInterval(interval);
+      return () => clearInterval(interval);
+    }
   }, [convite]);
 
   const toggleAudio = () => {
@@ -53,15 +57,33 @@ export default function ConviteClient({ convite }) {
   };
 
   const handleCopyPix = () => {
+    if (!convite.chavePix) return;
     navigator.clipboard.writeText(convite.chavePix);
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
   };
 
-  const handleRsvpSubmit = (e) => {
+  const handleRsvpSubmit = async (e) => {
     e.preventDefault();
-    // Aqui você pode fazer um fetch() enviando os dados para seu backend / API
-    setRsvpSent(true);
+    if (!nome.trim()) return;
+
+    setIsSubmitting(true);
+
+    const { error } = await supabase.from('rsvps').insert([
+      {
+        convite_slug: convite.slug,
+        nome: nome.trim(),
+        acompanhantes: acompanhantes,
+      },
+    ]);
+
+    setIsSubmitting(false);
+
+    if (!error) {
+      setRsvpSent(true);
+    } else {
+      alert('Ocorreu um erro ao enviar sua confirmação. Por favor, tente novamente.');
+    }
   };
 
   return (
@@ -78,94 +100,116 @@ export default function ConviteClient({ convite }) {
         </button>
       )}
 
-      {/* Capa e Título */}
+      {/* Cartão do Convite */}
       <div className="w-full max-w-md bg-white shadow-xl overflow-hidden min-h-screen flex flex-col">
-        <div className="relative h-96 w-full">
-          <img
-            src={convite.fotoCapa}
-            alt={convite.titulo}
-            className="w-full h-full object-cover"
-          />
+        
+        {/* Capa e Título */}
+        <div className="relative h-96 w-full bg-stone-200">
+          {convite.fotoCapa && (
+            <img
+              src={convite.fotoCapa}
+              alt={convite.titulo}
+              className="w-full h-full object-cover"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-6 text-center text-white">
-            <span className="uppercase tracking-widest text-xs font-semibold text-rose-200 mb-1">{convite.subtitulo}</span>
+            {convite.subtitulo && (
+              <span className="uppercase tracking-widest text-xs font-semibold text-rose-200 mb-1">
+                {convite.subtitulo}
+              </span>
+            )}
             <h1 className="text-4xl font-serif font-bold mb-2">{convite.titulo}</h1>
           </div>
         </div>
 
         {/* Mensagem Principal */}
-        <div className="p-8 text-center bg-rose-50/50">
-          <Heart className="mx-auto text-rose-500 mb-3 fill-rose-500/20" size={28} />
-          <p className="font-serif italic text-stone-600 leading-relaxed text-sm">
-            "{convite.mensagem}"
-          </p>
-        </div>
+        {convite.mensagem && (
+          <div className="p-8 text-center bg-rose-50/50">
+            <Heart className="mx-auto text-rose-500 mb-3 fill-rose-500/20" size={28} />
+            <p className="font-serif italic text-stone-600 leading-relaxed text-sm">
+              "{convite.mensagem}"
+            </p>
+          </div>
+        )}
 
         {/* Regressivo */}
-        <div className="p-6 bg-stone-900 text-white text-center">
-          <p className="text-xs uppercase tracking-widest text-stone-400 mb-3">Faltam Apenas</p>
-          <div className="grid grid-cols-4 gap-2 text-center">
-            <div className="bg-stone-800 p-2 rounded-lg">
-              <span className="text-xl font-bold font-mono text-rose-300">{timeLeft.dias}</span>
-              <p className="text-[10px] text-stone-400 uppercase">Dias</p>
-            </div>
-            <div className="bg-stone-800 p-2 rounded-lg">
-              <span className="text-xl font-bold font-mono text-rose-300">{timeLeft.horas}</span>
-              <p className="text-[10px] text-stone-400 uppercase">Horas</p>
-            </div>
-            <div className="bg-stone-800 p-2 rounded-lg">
-              <span className="text-xl font-bold font-mono text-rose-300">{timeLeft.minutos}</span>
-              <p className="text-[10px] text-stone-400 uppercase">Min</p>
-            </div>
-            <div className="bg-stone-800 p-2 rounded-lg">
-              <span className="text-xl font-bold font-mono text-rose-300">{timeLeft.segundos}</span>
-              <p className="text-[10px] text-stone-400 uppercase">Seg</p>
+        {convite.dataEvento && (
+          <div className="p-6 bg-stone-900 text-white text-center">
+            <p className="text-xs uppercase tracking-widest text-stone-400 mb-3">Faltam Apenas</p>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div className="bg-stone-800 p-2 rounded-lg">
+                <span className="text-xl font-bold font-mono text-rose-300">{timeLeft.dias}</span>
+                <p className="text-[10px] text-stone-400 uppercase">Dias</p>
+              </div>
+              <div className="bg-stone-800 p-2 rounded-lg">
+                <span className="text-xl font-bold font-mono text-rose-300">{timeLeft.horas}</span>
+                <p className="text-[10px] text-stone-400 uppercase">Horas</p>
+              </div>
+              <div className="bg-stone-800 p-2 rounded-lg">
+                <span className="text-xl font-bold font-mono text-rose-300">{timeLeft.minutos}</span>
+                <p className="text-[10px] text-stone-400 uppercase">Min</p>
+              </div>
+              <div className="bg-stone-800 p-2 rounded-lg">
+                <span className="text-xl font-bold font-mono text-rose-300">{timeLeft.segundos}</span>
+                <p className="text-[10px] text-stone-400 uppercase">Seg</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Data e Local */}
         <div className="p-8 space-y-6 text-center">
-          <div className="space-y-2">
-            <Calendar className="mx-auto text-rose-700" size={24} />
-            <h2 className="font-bold text-lg text-stone-900">Data & Horário</h2>
-            <p className="text-sm text-stone-600">{convite.dataExibicao}</p>
-          </div>
+          {convite.dataExibicao && (
+            <div className="space-y-2">
+              <Calendar className="mx-auto text-rose-700" size={24} />
+              <h2 className="font-bold text-lg text-stone-900">Data & Horário</h2>
+              <p className="text-sm text-stone-600">{convite.dataExibicao}</p>
+            </div>
+          )}
 
-          <hr className="border-stone-200 my-4" />
+          {convite.dataExibicao && convite.localNome && <hr className="border-stone-200 my-4" />}
 
-          <div className="space-y-2">
-            <MapPin className="mx-auto text-rose-700" size={24} />
-            <h2 className="font-bold text-lg text-stone-900">Localização</h2>
-            <p className="font-medium text-stone-800 text-sm">{convite.localNome}</p>
-            <p className="text-xs text-stone-500">{convite.endereco}</p>
-            
-            <a
-              href={convite.linkMapas}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-3 px-5 py-2.5 bg-stone-900 text-white text-xs font-semibold rounded-full hover:bg-stone-800 transition shadow-md"
-            >
-              Ver no Google Maps / Waze
-            </a>
-          </div>
+          {convite.localNome && (
+            <div className="space-y-2">
+              <MapPin className="mx-auto text-rose-700" size={24} />
+              <h2 className="font-bold text-lg text-stone-900">Localização</h2>
+              <p className="font-medium text-stone-800 text-sm">{convite.localNome}</p>
+              {convite.endereco && <p className="text-xs text-stone-500">{convite.endereco}</p>}
+              
+              {convite.linkMapas && (
+                <a
+                  href={convite.linkMapas}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 mt-3 px-5 py-2.5 bg-stone-900 text-white text-xs font-semibold rounded-full hover:bg-stone-800 transition shadow-md"
+                >
+                  Ver no Google Maps / Waze
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Presente / PIX */}
-        <div className="p-8 bg-rose-50/30 text-center border-t border-b border-stone-200">
-          <Gift className="mx-auto text-rose-700 mb-2" size={24} />
-          <h2 className="font-bold text-lg text-stone-900">Lista de Presentes (PIX)</h2>
-          <p className="text-xs text-stone-600 mb-4">Sua presença é nosso maior presente! Caso deseje nos presentear, utilize a chave PIX abaixo:</p>
-          
-          <button
-            onClick={handleCopyPix}
-            className="w-full py-3 px-4 bg-white border border-rose-200 text-rose-900 font-semibold text-xs rounded-xl shadow-sm flex items-center justify-center gap-2 active:scale-95 transition"
-          >
-            {copied ? <Check size={16} className="text-emerald-600" /> : <Copy size={16} />}
-            {copied ? 'Chave PIX Copiada!' : 'Copiar Chave PIX'}
-          </button>
-        </div>
+        {convite.chavePix && (
+          <div className="p-8 bg-rose-50/30 text-center border-t border-b border-stone-200">
+            <Gift className="mx-auto text-rose-700 mb-2" size={24} />
+            <h2 className="font-bold text-lg text-stone-900">Lista de Presentes (PIX)</h2>
+            <p className="text-xs text-stone-600 mb-4">
+              Sua presença é nosso maior presente! Caso deseje nos presentear, utilize a chave PIX abaixo:
+            </p>
+            
+            <button
+              onClick={handleCopyPix}
+              className="w-full py-3 px-4 bg-white border border-rose-200 text-rose-900 font-semibold text-xs rounded-xl shadow-sm flex items-center justify-center gap-2 active:scale-95 transition"
+            >
+              {copied ? <Check size={16} className="text-emerald-600" /> : <Copy size={16} />}
+              {copied ? 'Chave PIX Copiada!' : 'Copiar Chave PIX'}
+            </button>
+          </div>
+        )}
 
-        {/* Botão de RSVP */}
+        {/* Botão Principal de RSVP */}
         <div className="p-6 mt-auto">
           <button
             onClick={() => setShowRsvpModal(true)}
@@ -178,7 +222,7 @@ export default function ConviteClient({ convite }) {
 
       </div>
 
-      {/* Modal de RSVP */}
+      {/* Modal de Confirmação (RSVP) */}
       {showRsvpModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
@@ -192,7 +236,9 @@ export default function ConviteClient({ convite }) {
             {!rsvpSent ? (
               <form onSubmit={handleRsvpSubmit} className="space-y-4">
                 <h3 className="text-xl font-serif font-bold text-stone-900 text-center">Confirmar Presença</h3>
-                <p className="text-xs text-stone-500 text-center">Por favor, informe seus dados até 10 dias antes do evento.</p>
+                <p className="text-xs text-stone-500 text-center">
+                  Por favor, confirme seus dados para garantirmos o seu lugar.
+                </p>
 
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 mb-1">Seu Nome Completo</label>
@@ -222,9 +268,10 @@ export default function ConviteClient({ convite }) {
 
                 <button
                   type="submit"
-                  className="w-full py-3 bg-rose-800 text-white font-bold text-xs rounded-xl shadow hover:bg-rose-900 transition"
+                  disabled={isSubmitting}
+                  className="w-full py-3 bg-rose-800 text-white font-bold text-xs rounded-xl shadow hover:bg-rose-900 transition disabled:opacity-50"
                 >
-                  Enviar Confirmação
+                  {isSubmitting ? 'Enviando...' : 'Enviar Confirmação'}
                 </button>
               </form>
             ) : (
@@ -233,8 +280,8 @@ export default function ConviteClient({ convite }) {
                 <h3 className="text-lg font-bold text-stone-900">Presença Confirmada!</h3>
                 <p className="text-xs text-stone-600">Agradecemos a sua confirmação. Esperamos por você!</p>
                 <button
-                  onClick={() => { setShowRsvpModal(false); setRsvpSent(false); }}
-                  className="mt-4 px-4 py-2 bg-stone-100 text-stone-700 text-xs font-semibold rounded-lg"
+                  onClick={() => { setShowRsvpModal(false); setRsvpSent(false); setNome(''); }}
+                  className="mt-4 px-4 py-2 bg-stone-100 text-stone-700 text-xs font-semibold rounded-lg hover:bg-stone-200 transition"
                 >
                   Fechar
                 </button>
