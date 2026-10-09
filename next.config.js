@@ -1,16 +1,6 @@
-import './globals.css';
-
-export const metadata = {
-  title: 'Convites Digitais Interativos',
-  description: 'Seu convite digital elegante e interativo.',
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
 };
 
-export default function RootLayout({ children }) {
-  return (
-    <html lang="pt-BR">
-      <body className="bg-slate-50 text-slate-800 font-sans antialiased">
-        {children}
-      </body>
-    </html>
-  );
-}
+module.exports = nextConfig;
