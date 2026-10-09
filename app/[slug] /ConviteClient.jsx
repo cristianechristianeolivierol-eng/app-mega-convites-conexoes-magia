@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { Calendar, MapPin, Heart, Gift, CheckCircle2, Volume2, VolumeX, Copy, Check } from 'lucide-react';
 
 export default function ConviteClient({ convite }) {
@@ -257,40 +257,4 @@ export default function ConviteClient({ convite }) {
                   <select
                     value={acompanhantes}
                     onChange={(e) => setAcompanhantes(e.target.value)}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
-                  >
-                    <option value="1">Apenas eu (1)</option>
-                    <option value="2">2 Pessoas</option>
-                    <option value="3">3 Pessoas</option>
-                    <option value="4">4 Pessoas ou mais</option>
-                  </select>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3 bg-rose-800 text-white font-bold text-xs rounded-xl shadow hover:bg-rose-900 transition disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Enviando...' : 'Enviar Confirmação'}
-                </button>
-              </form>
-            ) : (
-              <div className="text-center py-6 space-y-3">
-                <CheckCircle2 size={48} className="mx-auto text-emerald-600" />
-                <h3 className="text-lg font-bold text-stone-900">Presença Confirmada!</h3>
-                <p className="text-xs text-stone-600">Agradecemos a sua confirmação. Esperamos por você!</p>
-                <button
-                  onClick={() => { setShowRsvpModal(false); setRsvpSent(false); setNome(''); }}
-                  className="mt-4 px-4 py-2 bg-stone-100 text-stone-700 text-xs font-semibold rounded-lg hover:bg-stone-200 transition"
-                >
-                  Fechar
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-}
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-
