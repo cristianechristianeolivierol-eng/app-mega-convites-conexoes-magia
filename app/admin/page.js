@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { Plus, Edit, Link as LinkIcon, Users, Save, Trash2 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -255,82 +255,3 @@ export default function AdminPage() {
               ) : convites.length === 0 ? (
                 <p className="text-sm text-slate-500">Nenhum convite cadastrado ainda.</p>
               ) : (
-                <div className="divide-y divide-slate-100">
-                  {convites.map((item) => (
-                    <div key={item.slug} className="py-4 flex items-center justify-between gap-4">
-                      <div>
-                        <h3 className="font-bold text-slate-900">{item.titulo}</h3>
-                        <p className="text-xs text-rose-700 font-mono">/{item.slug}</p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <a
-                          href={`/${item.slug}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-2 bg-slate-100 rounded-lg hover:bg-slate-200 text-slate-700"
-                          title="Ver Convite Limpo"
-                        >
-                          <LinkIcon size={16} />
-                        </a>
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="p-2 bg-rose-50 text-rose-800 rounded-lg hover:bg-rose-100"
-                          title="Editar"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.slug)}
-                          className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
-                          title="Apagar"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Confirmações de Presença (RSVP) */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
-              <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <Users size={20} className="text-rose-800" />
-                Confirmações de Presença (RSVP)
-              </h2>
-
-              {rsvps.length === 0 ? (
-                <p className="text-sm text-slate-500">Nenhuma confirmação recebida ainda.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b text-slate-400 font-semibold uppercase">
-                        <th className="pb-2">Convite</th>
-                        <th className="pb-2">Nome do Convidado</th>
-                        <th className="pb-2">Pessoas</th>
-                        <th className="pb-2">Data</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {rsvps.map((rsvp) => (
-                        <tr key={rsvp.id} className="py-2">
-                          <td className="py-3 font-mono text-rose-800">{rsvp.convite_slug}</td>
-                          <td className="py-3 font-semibold text-slate-800">{rsvp.nome}</td>
-                          <td className="py-3 text-slate-600">{rsvp.acompanhantes}</td>
-                          <td className="py-3 text-slate-400">{new Date(rsvp.created_at).toLocaleDateString('pt-BR')}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
