@@ -1,55 +1,25 @@
-import { notFound } from 'next/navigation';
-import { supabase } from '../../lib/supabase';
-import ConviteClient from './ConviteClient';
+import Link from 'next/link';
 
-export const revalidate = 0; // Atualiza instantaneamente sem guardar em cache
-
-export async function generateMetadata({ params }) {
-  const { data: convite } = await supabase
-    .from('convites')
-    .select('*')
-    .eq('slug', params.slug)
-    .single();
-
-  if (!convite) return {};
-
-  return {
-    title: `${convite.titulo} - Convite Especial`,
-    description: convite.mensagem,
-    openGraph: {
-      title: `${convite.titulo} - Convite`,
-      description: convite.mensagem,
-      images: [{ url: convite.foto_capa }],
-    },
-  };
-}
-
-export default async function ConvitePage({ params }) {
-  const { data: convite } = await supabase
-    .from('convites')
-    .select('*')
-    .eq('slug', params.slug)
-    .single();
-
-  if (!convite) {
-    notFound();
-  }
-
-  // Mapeia as colunas da tabela do Supabase para as props do componente
-  const conviteFormatado = {
-    slug: convite.slug,
-    titulo: convite.titulo,
-    subtitulo: convite.subtitulo,
-    dataEvento: convite.data_evento,
-    dataExibicao: convite.data_exibicao,
-    localNome: convite.local_nome,
-    endereco: convite.endereco,
-    linkMapas: convite.link_mapas,
-    chavePix: convite.chave_pix,
-    fotoCapa: convite.foto_capa,
-    audioUrl: convite.audio_url,
-    mensagem: convite.mensagem,
-  };
-
-  return <ConviteClient convite={conviteFormatado} />;
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-6 text-center">
+      <div className="max-w-md space-y-6">
+        <h1 className="text-3xl font-bold font-serif text-rose-300">
+          Convites Conexões & Magia
+        </h1>
+        <p className="text-slate-300 text-sm leading-relaxed">
+          Plataforma de gestão e criação de convites digitais interativos.
+        </p>
+        
+        <div className="pt-4">
+          <Link
+            href="/admin"
+            className="inline-block bg-rose-700 hover:bg-rose-800 text-white font-semibold px-6 py-3 rounded-xl shadow-lg transition"
+          >
+            Acessar Painel do Cliente / Admin
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 }
