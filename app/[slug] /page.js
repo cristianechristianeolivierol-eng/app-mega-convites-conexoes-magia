@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../../lib/supabase';
 import ConviteClient from './ConviteClient';
 
-export const revalidate = 0; // Atualiza instantaneamente sem cache
+export const revalidate = 0; // Atualiza instantaneamente sem guardar em cache
 
 export async function generateMetadata({ params }) {
   const { data: convite } = await supabase
@@ -35,7 +35,7 @@ export default async function ConvitePage({ params }) {
     notFound();
   }
 
-  // Mapeia os nomes das colunas do banco para as props do componente
+  // Mapeia as colunas da tabela do Supabase para as props do componente
   const conviteFormatado = {
     slug: convite.slug,
     titulo: convite.titulo,
