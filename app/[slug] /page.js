@@ -2,40 +2,53 @@ import { notFound } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import ConviteClient from './ConviteClient';
 
-export const revalidate = 0; // Atualiza instantaneamente sem guardar em cache
+export const revalidate = 0; // Garante renderização dinâmica em tempo real
+export const dynamic = 'force-dynamic'; // Evita pré-renderização estática com erro no build
 
 export async function generateMetadata({ params }) {
-  const { data: convite } = await supabase
-    .from('convites')
-    .select('*')
-    .eq('slug', params.slug)
-    .single();
+  try {
+    const { data: convite } = await supabase
+      .from('convites')
+      .select('*')
+      .eq('slug', params.slug)
+      .single();
 
-  if (!convite) return {};
+    if (!convite) return {};
 
-  return {
-    title: `${convite.titulo} - Convite Especial`,
-    description: convite.mensagem,
-    openGraph: {
-      title: `${convite.titulo} - Convite`,
+    return {
+      title: `${convite.titulo} - Convite Especial`,
       description: convite.mensagem,
-      images: [{ url: convite.foto_capa }],
-    },
-  };
+      openGraph: {
+        title: `${convite.titulo} - Convite`,
+        description: convite.mensagem,
+        images: [{ url: convite.foto_capa }],
+      },
+    };
+  } catch (error) {
+    return { title: 'Convite Especial' };
+  }
 }
 
 export default async function ConvitePage({ params }) {
-  const { data: convite } = await supabase
-    .from('convites')
-    .select('*')
-    .eq('slug', params.slug)
-    .single();
+  let convite = null;
+
+  try {
+    const { data } = await supabase
+      .from('convites')
+      .select('*')
+      .eq('slug', params.slug)
+      .single();
+
+    convite = data;
+  } catch (error) {
+    console.error('Erro ao buscar convite no Supabase:', error);
+  }
 
   if (!convite) {
     notFound();
   }
 
-  // Mapeia as colunas da tabela do Supabase para as props do componente
+  // Mapeia as colunas do banco para as propriedades do componente
   const conviteFormatado = {
     slug: convite.slug,
     titulo: convite.titulo,
